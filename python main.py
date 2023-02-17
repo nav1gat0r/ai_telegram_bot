@@ -7,8 +7,8 @@ import telegram
 from telegram.ext import Updater, MessageHandler, CommandHandler, filters
 
 # Fetching keys
-BOT_TOKEN = os.environ.get("6071719535:AAELRYVS6zha_Jwrpnv3yGAHOgGGo85A4B4")
-OPENAI_API_KEY = os.environ.get("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")
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+OPENAI_API_KEY = os.environ.get("OPEN_AI_API")
 
 # Authenticating with OpenAI
 openai.api_key = OPENAI_API_KEY
