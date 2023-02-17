@@ -1,45 +1,46 @@
 # Import function to support operability
-from background import keep_alive 
-
 import os
+from background import keep_alive #импорт функции для поддержки работоспособности
+
+import telebot
 import openai
-import telegram
-from telegram.ext import Updater, MessageHandler, CommandHandler, filters
 
-# Fetching keys
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-OPENAI_API_KEY = os.environ.get("OPEN_AI_API")
+bot = telebot.TeleBot("YOUR_BOT_TOKEN")
+openai.api_key = "OPENAI_API"
 
-# Authenticating with OpenAI
-openai.api_key = OPENAI_API_KEY
+# initialize context dictionary to store conversation context
+context = {}
 
-# Defining the message handler function
-def message_handler(update, context):
-    # Getting the user's message
-    message = update.message.text
-
-    # Generating a response from OpenAI's GPT-3
+@bot.message_handler(content_types=["text"])
+def handle_text(message):
+    # get the article name from the message
+    article_name = message.text
+    
+    # check if the article name is already in the context dictionary
+    if article_name in context:
+        # if it is, use the existing context
+        prompt = context[article_name]
+    else:
+        # if it isn't, create a new context with just the article name
+        prompt = f"{article_name}: "
+    
+    # add the user's message to the prompt and get response from GPT
+    prompt += message.text
     response = openai.Completion.create(
-        engine="davinci",
-        prompt=message,
-        max_tokens=1024,
+        engine="code-davinci-002",
+        prompt=prompt,
+        max_tokens=8000,
         n=1,
         stop=None,
-        temperature=0.7,
+        temperature=0.5,
     )
-
-    # Sending the response back to the user
-    update.message.reply_text(response.choices[0].text)
-
-# Creating the bot and registering the message handler function
-bot = telegram.Bot(token=BOT_TOKEN)
-updater = Updater(token=BOT_TOKEN, use_context=True)
-updater.dispatcher.add_handler(MessageHandler(Filters.text, message_handler))
-
-# Starting the bot
-updater.start_polling()
-updater.idle()
-
+    bot.send_message(message.chat.id, response.choices[0].text)
+    
+    # update the context dictionary with the new context
+    context[article_name] = prompt
 
 # Start the flask server in a separate thread.
 keep_alive()
+
+# Start the bot
+bot.polling(non_stop=True, interval=0) 
